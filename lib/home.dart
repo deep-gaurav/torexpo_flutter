@@ -6,6 +6,7 @@ import 'package:rational/rational.dart';
 import 'package:torexpo_flutter/graphql_api.graphql.dart';
 import 'package:torexpo_flutter/main.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:http/http.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -105,7 +106,9 @@ class _HomeState extends State<Home> {
               ElevatedButton(
                 onPressed: () async {
                   var file = await FilePicker.platform.pickFiles();
-                  if (file?.files.isNotEmpty ?? false) {}
+                  if (file?.files.isNotEmpty ?? false) {
+                    Navigator.of(context).pop(file!.files.first);
+                  }
                 },
                 child: Text("Upload Torrent"),
               ),
@@ -117,6 +120,24 @@ class _HomeState extends State<Home> {
     if (torrentData is String) {
       var addTorrent = await client.execute(AddMagnetLinkMutation(
           variables: AddMagnetLinkArguments(magnetLink: torrentData)));
+      refresh();
+    } else if (torrentData is PlatformFile) {
+      if (torrentData.readStream != null) {
+        var addTorrent = await client.execute(AddTorrentFileMutation(
+            variables: AddTorrentFileArguments(
+                torrentFile: MultipartFile(
+          "torrent",
+          torrentData.readStream!,
+          torrentData.size,
+        ))));
+      } else if (torrentData.bytes != null) {
+        var addTorrent = await uploadClient.execute(AddTorrentFileMutation(
+            variables: AddTorrentFileArguments(
+                torrentFile: MultipartFile.fromBytes(
+          "torrent",
+          torrentData.bytes!.toList(),
+        ))));
+      }
       refresh();
     }
   }

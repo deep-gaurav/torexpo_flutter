@@ -19,6 +19,8 @@ final ArtemisClient client = ArtemisClient.fromLink(
     ),
   ),
 );
+
+final ArtemisClient uploadClient = ArtemisClient("https://torexpo.sodeep.me");
 final baseURL = "https://torexpo.sodeep.me";
 
 class MyApp extends StatelessWidget {
