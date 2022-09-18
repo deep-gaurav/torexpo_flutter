@@ -134,8 +134,9 @@ class _HomeState extends State<Home> {
         var addTorrent = await uploadClient.execute(AddTorrentFileMutation(
             variables: AddTorrentFileArguments(
                 torrentFile: MultipartFile.fromBytes(
-          "torrent",
+          "files",
           torrentData.bytes!.toList(),
+          filename: torrentData.name,
         ))));
       }
       refresh();
