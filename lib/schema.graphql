@@ -1,0 +1,296 @@
+schema {
+  query: QueryRoot
+  mutation: MutationRoot
+  subscription: SubscriptionRoot
+}
+
+type MutationRoot {
+  addMagnetLink(magnetLink: String!): Int!
+  addTorrentFile(torrent: Upload!): Int!
+  remove(torrentId: Int!): String!
+  start(torrentId: Int!): String!
+  stop(torrentId: Int!): String!
+}
+
+# ISO 8601 combined date and time without timezone.
+#
+# # Examples
+#
+# * `2015-07-01T08:59:60.123`,
+scalar NaiveDateTime
+
+type QueryRoot {
+  torrents: [Torrent!]!
+}
+
+type SubscriptionRoot {
+  monitorTorrent(torrentId: Int!, refreshDurationMillis: Int! = 500): Torrent!
+}
+
+type Torrent {
+  id: Int!
+  name: String!
+  state: TorrentState!
+  info: TorrentInfo!
+  stats: TorrentStats!
+}
+
+enum TorrentError {
+  # A general state of non-error.
+  # If this is is ever the `Err` of a `Result` please file a bug report.
+  NO_ERROR
+
+  # For all errors with unknown causes.
+  UNKNOWN
+
+  # An error occured in file I/O.
+  IO_ERROR
+
+  # Error in parsing a torrent.
+  PARSE_ERR
+
+  # When parsing a torrent if it is a duplicate.
+  PARSE_DUPLICATE
+
+  # Local error when getting a torrent's stats.
+  STAT_LOCAL
+
+  # Tracker error when getting a torrent's stats.
+  STAT_TRACKER
+
+  # Tracker warning when getting a torrent's stats.
+  STAT_TRACKER_WARN
+
+  # An error with the URL when getting metainfo.
+  MAKE_META_URL
+
+  # Getting metainfo was cancelled.
+  MAKE_META_CANCELLED
+}
+
+type TorrentFile {
+  # The length of the file in bytes
+  length: Int!
+
+  # Name of the file
+  name: String!
+
+  # Download priority of the file
+  dnd: Int!
+
+  # Was the file renamed?
+  isRenamed: Boolean!
+  firstPiece: Int!
+  lastPiece: Int!
+  offset: Int!
+  downloadLink(expirySecs: Int): String
+}
+
+type TorrentInfo {
+  # Total download size in bytes
+  totalSize: Int!
+
+  # Original name of the torrent
+  originalName: String!
+
+  # Name of the torrent
+  name: String!
+  torrent: String!
+
+  # Webseeds of the torrent
+  webseeds: [String!]!
+
+  # Comment on the torrent
+  comment: String!
+
+  # The torrent's creator
+  creator: String!
+
+  # Files of the torrent
+  files: [TorrentFile!]!
+
+  # Pieces of the torrent
+  #
+  # This is skipped in Serialization due to it's size.
+  # If you want it serialized you will have to do it manually.
+  pieces: [TorrentPiece!]!
+
+  # Trackers of the torrent
+  trackers: [TrackerInfo!]!
+
+  # Date the torrent was created
+  dateCreated: NaiveDateTime!
+
+  # Number of trackers
+  trackerCount: Int!
+
+  # Number of webseeds
+  webseedCount: Int!
+
+  # Number of files
+  fileCount: Int!
+
+  # Sice of pieces in bytes
+  pieceSize: Int!
+
+  # Number of pieces
+  pieceCount: Int!
+  hash: [Int!]!
+
+  # String hash of the torrent
+  hashString: String!
+  isPrivate: Boolean!
+
+  # Is it a torrent of a folder?
+  isFolder: Boolean!
+}
+
+type TorrentPiece {
+  # Last time the piece was checked
+  timeChecked: NaiveDateTime!
+  hash: [Int!]!
+
+  # Priority of the piece
+  priority: Int!
+  dnd: Int!
+}
+
+enum TorrentState {
+  # The torrent is downloading
+  DOWNLOADING
+
+  # The torrent is waiting to download
+  DOWNLOADING_WAIT
+
+  # The torrent is seeding
+  SEEDING
+
+  # The torrent is waiting to seed
+  SEEDING_WAIT
+
+  # The torrent is stopped
+  STOPPED
+
+  # The torrent is being checked
+  CHECKING
+
+  # The torrent is waiting to be checked
+  CHECKING_WAIT
+
+  # The torrent has errored
+  ERROR
+}
+
+type TorrentStats {
+  # The ID of the torrent.
+  id: Int!
+
+  # The state of the torrent. Internally Transmission calls this the "activity",
+  state: TorrentState!
+
+  # The error state (if any).
+  error: TorrentError!
+
+  # A string describing the above error if any.
+  errorString: String!
+
+  # Progress rechecking a torrent.
+  recheckProgress: Float!
+
+  # Percent of the total download completed.
+  percentComplete: Float!
+
+  # Percent of the metadata download completed.
+  metadataPercentComplete: Float!
+
+  # Percent of the desired download completed.
+  # This differs from [`torrent::TorrentStats::percent_complete`] if the user only wants some of a torrent's files.
+  percentDone: Float!
+
+  # Percent of the seed ratio uploaded. 1 if completed or infinite.
+  seedRatioPercentDone: Float!
+
+  # The raw upload speed.
+  rawUploadSpeedKbps: Float!
+
+  # The raw download speed.
+  rawDownloadSpeedKbps: Float!
+
+  # The actual piece upload speed.
+  pieceUploadSpeedKbps: Float!
+
+  # The actual piece download speed.
+  pieceDownloadSpeedKbps: Float!
+
+  # Estimated time of arrival (completion)
+  eta: Int!
+  etaIdle: Int!
+
+  # Number of peers connected for this torrent.
+  peersConnected: Int!
+  peersFrom: [Int!]!
+
+  # Peers we are downloading from.
+  peersSendingToUs: Int!
+
+  # Peers we are uploading to.
+  peersGettingFromUs: Int!
+
+  # Webseeds we are downlading from.
+  webseedsSendingToUs: Int!
+
+  # Size in bytes when completed.
+  sizeWhenDone: Int!
+
+  # Bytes until download is finished.
+  leftUntilDone: Int!
+  desiredAvailable: Int!
+  corruptEver: Int!
+  uploadedEver: Int!
+  downloadedEver: Int!
+  haveValid: Int!
+  haveUnchecked: Int!
+  manualAnnounceTime: NaiveDateTime!
+
+  # Seed ratio
+  ratio: Float!
+
+  # Date and time added
+  addedDate: NaiveDateTime!
+
+  # Date and time finished
+  doneDate: NaiveDateTime!
+
+  # Date and time started
+  startDate: NaiveDateTime!
+
+  # Date and time of last activity
+  activityDate: NaiveDateTime!
+
+  # How long it has been idle
+  idleSecs: Int!
+
+  # How long it has been downloading
+  secondsDownloading: Int!
+
+  # How log it has been seeding
+  secondsSeeding: Int!
+
+  # Is the torrent finished
+  finished: Boolean!
+
+  # What position in the queue is the torrent
+  queuePosition: Int!
+
+  # Is the torrent stalled
+  isStalled: Boolean!
+}
+
+type TrackerInfo {
+  tier: Int!
+  announce: String!
+  scrape: String!
+  id: Int!
+}
+
+scalar Upload

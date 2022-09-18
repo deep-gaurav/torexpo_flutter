@@ -1,0 +1,74 @@
+mutation addMagnetLink($magnetLink: String!) {
+  addMagnetLink(magnetLink: $magnetLink)
+}
+
+mutation addTorrentFile($torrentFile: Upload!) {
+  addTorrentFile(torrent: $torrentFile)
+}
+
+mutation start($torrentId: Int!) {
+  start(torrentId: $torrentId)
+}
+
+mutation stop($torrentId: Int!) {
+  stop(torrentId: $torrentId)
+}
+
+mutation remove($torrentId: Int!) {
+  remove(torrentId: $torrentId)
+}
+
+fragment TorrentFileFragment on TorrentFile {
+  name
+  length
+  downloadLink
+}
+
+fragment TorrentInfoFragment on TorrentInfo {
+  dateCreated
+  
+  totalSize
+  files {
+    ...TorrentFileFragment
+  }
+}
+
+fragment TorrentStatsFragment on TorrentStats {
+  percentDone
+  percentComplete
+
+  error
+  errorString
+  peersConnected
+  downloadedEver
+  uploadedEver
+  sizeWhenDone
+  
+  isStalled
+  finished
+  eta
+}
+
+fragment TorrentFragment on Torrent {
+  id
+  name
+  state
+  info {
+    ...TorrentInfoFragment
+  }
+  stats {
+    ...TorrentStatsFragment
+  }
+}
+
+query torrents{
+  torrents{
+    ...TorrentFragment
+  }
+}
+
+subscription torrentSubscription($torrentId:Int!){
+  monitorTorrent(torrentId:$torrentId){
+    ...TorrentFragment
+  }
+}
