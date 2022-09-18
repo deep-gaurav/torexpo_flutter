@@ -377,6 +377,14 @@ class _TorrentTileState extends State<TorrentTile> {
                   ),
                   child: Row(
                     children: [
+                      IconButton(
+                        onPressed: () {
+                          toggle();
+                        },
+                        icon: showFiles
+                            ? Icon(Icons.arrow_upward)
+                            : Icon(Icons.arrow_downward),
+                      ),
                       Spacer(),
                       IconButton(
                         onPressed: () {
